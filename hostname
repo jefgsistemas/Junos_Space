@@ -18,17 +18,13 @@ param $direccion = "192.168.6.0";
 
 /* var $conn = jcs:open();
 var $getarptable = jcs:execute($conn,"get-arp-table-information"); */
-var $location = @location;
-read $location;
-var $message = "We are in " _ $location _ " now.";
+
 
 match / {
 	<op-script-results> {
 		<output> "DAVID ES UN MARIK\n";
 		<output> "DAVID ES UN MARIK\n";
 		<output> "DAVID ES UN MARIK\n";
-		<output> $location;
-		<output> $message;
 		/*<output> $getqarptable;*/
 		
 		/*cambia el nombre del pc;*/
