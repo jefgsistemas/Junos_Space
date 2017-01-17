@@ -11,10 +11,9 @@ import "../import/junos.xsl";
 /* var $conn = jcs:open();
 var $getarptable = jcs:execute($conn,"get-arp-table-information"); */
 
-
 match / {
 	<op-script-results> {
-		<output> $getqarptable;
+		/*<output> $getqarptable;*/
 		
 		/*cambia el nombre del pc;*/
 		var $configname = <configuration> {
@@ -23,7 +22,6 @@ match / {
 			}
 		}
 		
-
 	var $conn = jcs:open();	
 	var $results := { call jcs:load-configuration( $connection = $conn, $configuration = $configname ); }
     
