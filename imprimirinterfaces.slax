@@ -1,0 +1,27 @@
+version 1.0;
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+import "../import/junos.xsl";
+
+var $number = 0;
+var $num = "3";
+var $txt = "three";
+
+match / {
+	<op-script-results> {
+		var $rpc-config-req = <get-configuration
+		database="committed" inherit="inherit">;
+		var $configuration = jcs:invoke($rpc-config-req);
+		<output> " Imprime lista de interfaces";
+		for-each($configuration/interfaces/interface) {
+		<output> name;
+		}
+		<output> " Imprime lista de direcciones de interfaces";
+		for-each($configuration/interfaces/interface/unit/family/inet/address) {
+		<output> name;
+		var $direccion = name;
+		<output> $number;
+		}
+	}
+}
