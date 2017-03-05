@@ -1,0 +1,101 @@
+/*
+Este script cambia el ancho de banda del puerto 
+el usuario ingresa la opcion a para agregar 4MB
+o ingresa la opcion b para eliminar la configuracion 
+Escrito por: Jorge Fernandez
+*/
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+ns slax = "http://xml.libslax.org/slax";
+
+import "../import/junos.xsl";
+match / {
+	<op-script-results> {
+		/*cambia el ancho de banda de la interface 1;*/
+		var $opcion = jcs:get-input("Ingrese a para asignar 4MB, ingrese b para retirar 4MB ");
+		
+		if (($opcion != "a") or ($opcion != "b")) {
+			<output> "No ingreso una opcion valida";
+			}
+		
+		if ($opcion == "a") {
+			<output> $opcion;
+			
+			/*call name-servers-template;*/
+			var $configinterface = <configuration> {
+				<interfaces> {
+					<interface> { 
+					<name> "em0";
+						<unit> {
+						<name> "0";
+						<bandwidth> "4000000";
+						}			
+					}
+				}
+			}
+			var $load-action = "merge";
+
+			var $options := {
+				<commit-options> {
+				<log> "cambio ancho de banda a 4MB interface";
+				}
+			}	
+
+			/* llama la plantilla guarda-config para enviar la configuracion y guardar */
+			call guarda-config( $config = $configinterface, $accion = $load-action, $opcion-log = $options);
+		}
+				
+		if ($opcion == "b") {
+			<output> $opcion;
+			var $configinterfaced = <configuration> {
+				<interfaces> {
+					<interface> { 
+					<name> "em0";
+						<unit> {
+						<name> "0";
+						<bandwidth delete="delete">;
+						}			
+					}
+				}
+			}
+			var $load-action = "merge";
+
+			var $options := {
+				<commit-options> {
+				<log> "elimnar ancho de banda a 4MB interface";
+				}
+			}	
+	
+			/* Llama la plantilla guarda-config para enviar y guardar la configuracion */
+			call guarda-config( $config = $configinterfaced, $accion = $load-action, $opcion-log = $options);
+		}
+	
+	/*template name-servers-template {
+		<output> "impresion desde plantilla";
+		}*/
+	}
+}
+
+template guarda-config() {
+	param $config;
+	param $accion;
+	param $opcion-log;
+		
+	var $conn = jcs:open();	
+	
+	var $results := { call jcs:load-configuration( $action=$accion, $commit-options=$opcion-log, $connection = $conn, $configuration = $config ); }
+	
+	/* Verifica errores en la carga de configuracion */
+	if( $results//xnm:error ) {
+		for-each( $results//xnm:error ) {
+			<output> message;
+		}
+	}
+    
+	/* Cierra la conexion*/
+	var $close-results = jcs:close($conn);
+}
