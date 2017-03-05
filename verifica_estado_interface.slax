@@ -1,0 +1,28 @@
+version 1.1;
+ 
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns date = "http://exslt.org/dates-and-times";
+ns redirect extension = "org.apache.xalan.xslt.extensions.Redirect";
+ns exsl extension = "http://exslt.org/common";
+ 
+import "../import/junos.xsl";
+
+match / {
+  <op-script-results> {
+    var $conn = jcs:open();
+    var $wait = jcs:sleep(4);
+    var $vc_cmd = <command> "show interfaces terse em0";
+    var $out_vc = jcs:execute($conn, $vc_cmd);
+		if (contains($out_vc, "down")) {
+			var $temp = jcs:output("La interface em0 esta Down");
+		}
+		else {
+		var $temp = jcs:output("la interface em0 esta Up");
+		}
+			
+	/*<output> "verificar funcionalidad";
+	<output> $out_vc;*/
+	}
+}
