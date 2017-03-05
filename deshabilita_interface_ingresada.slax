@@ -1,0 +1,49 @@
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+ns slax = "http://xml.libslax.org/slax";
+
+import "../import/junos.xsl";
+
+match / {
+	<op-script-results> {
+
+		var $usage = "este script deshabilita una interfaz definida por le usuario." _  
+                         "Modifica la configuracion candidata " _
+                         "y guarda la configuracion como la aciva.";
+		var $temp = jcs:output($usage);
+
+		var $interface = jcs:get-input("Ingrese la interfaz que requiere desactivar: ");
+
+		var $config-interface = {
+			<configuration> {
+				<interfaces> {
+					<interface> {
+						<name> $interface;
+						<disable>;
+					}
+				}
+			}
+		}
+
+	var $load-action = "merge";
+
+    var $options := {
+       <commit-options> {
+           <log> "disabling interface " _ $interface;
+        }
+    }
+
+    var $conn = jcs:open();
+
+    var $results := { 
+      call jcs:load-configuration( $action=$load-action, $commit-options=$options, 
+                $configuration=$config-interface, $connection=$conn); 
+    }
+	
+    var $close-results = jcs:close($conn);
+	}
+}
