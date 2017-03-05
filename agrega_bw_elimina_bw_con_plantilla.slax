@@ -18,65 +18,62 @@ match / {
 		/*cambia el ancho de banda de la interface 1;*/
 		var $opcion = jcs:get-input("Ingrese a para asignar 4MB, ingrese b para retirar 4MB ");
 		
-		if (($opcion != "a") or ($opcion != "b")) {
+		if (($opcion != "a") && ($opcion != "b")) {
 			<output> "No ingreso una opcion valida";
-			}
-		
-		if ($opcion == "a") {
-			<output> $opcion;
-			
-			/*call name-servers-template;*/
-			var $configinterface = <configuration> {
-				<interfaces> {
-					<interface> { 
-					<name> "em0";
-						<unit> {
-						<name> "0";
-						<bandwidth> "4000000";
-						}			
-					}
-				}
-			}
-			var $load-action = "merge";
+			} else {
+	
+					if ($opcion == "a") {
+						<output> $opcion;
+						
+						/*call name-servers-template;*/
+						var $configinterface = <configuration> {
+							<interfaces> {
+								<interface> { 
+								<name> "em0";
+									<unit> {
+									<name> "0";
+									<bandwidth> "4000000";
+									}			
+								}
+							}
+						}
+						var $load-action = "merge";
 
-			var $options := {
-				<commit-options> {
-				<log> "cambio ancho de banda a 4MB interface";
-				}
-			}	
-
-			/* llama la plantilla guarda-config para enviar la configuracion y guardar */
-			call guarda-config( $config = $configinterface, $accion = $load-action, $opcion-log = $options);
-		}
+						var $options := {
+							<commit-options> {
+							<log> "cambio ancho de banda a 4MB interface";
+							}
+						}	
 				
-		if ($opcion == "b") {
-			<output> $opcion;
-			var $configinterfaced = <configuration> {
-				<interfaces> {
-					<interface> { 
-					<name> "em0";
-						<unit> {
-						<name> "0";
-						<bandwidth delete="delete">;
-						}			
+						/* llama la plantilla guarda-config para enviar la configuracion y guardar */
+						call guarda-config( $config = $configinterface, $accion = $load-action, $opcion-log = $options);
+					}
+				
+					if ($opcion == "b") {
+						<output> $opcion;
+						var $configinterfaced = <configuration> {
+							<interfaces> {
+								<interface> { 
+								<name> "em0";
+									<unit> {
+									<name> "0";
+									<bandwidth delete="delete">;
+									}			
+								}
+							}
+						}
+						var $load-action = "merge";
+
+						var $options := {
+							<commit-options> {
+							<log> "elimnar ancho de banda a 4MB interface";
+							}
+						}	
+				
+						/* Llama la plantilla guarda-config para enviar y guardar la configuracion */
+						call guarda-config( $config = $configinterfaced, $accion = $load-action, $opcion-log = $options);
 					}
 				}
-			}
-			var $load-action = "merge";
-
-			var $options := {
-				<commit-options> {
-				<log> "elimnar ancho de banda a 4MB interface";
-				}
-			}	
-	
-			/* Llama la plantilla guarda-config para enviar y guardar la configuracion */
-			call guarda-config( $config = $configinterfaced, $accion = $load-action, $opcion-log = $options);
-		}
-	
-	/*template name-servers-template {
-		<output> "impresion desde plantilla";
-		}*/
 	}
 }
 
