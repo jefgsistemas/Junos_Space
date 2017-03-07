@@ -1,0 +1,44 @@
+/*
+Este script copia el contenido del archivo show_storage_uno a show_storage_dos
+Deben existir los archivos en la ruta /var/tmp previamente
+Escrito por: Jorge Fernandez
+*/
+
+version 1.0;
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns redirect extension = "org.apache.xalan.xslt.extensions.Redirect";
+ns exsl extension = "http://exslt.org/common";
+ 
+import "../import/junos.xsl";
+
+match / {
+  <op-script-results> {
+    var $rpc-int-info-req = {
+      <get-interface-information> {
+      <terse>;
+      }
+    }
+	var $conn = jcs:open();
+
+	var $rsi-get = <file-get> {
+          <filename> "/var/tmp/show_storage_uno.txt";
+          <encoding> "ascii";
+        }
+	var $out_keep_writing = jcs:execute($conn, $rsi-get);
+	
+	<output> $out_keep_writing;
+	var $rsi-put = <file-put> {
+          <filename> "/var/tmp/show_storage_dos.txt";
+          <encoding> "ascii";
+		  <permission> "775";
+          <delete-if-exist>;
+          <file-contents> $out_keep_writing;
+        }
+	
+	var $out_keep_writingd = jcs:execute($conn, $rsi-put);
+	var $close-results = jcs:close($conn);
+	
+  }
+}
