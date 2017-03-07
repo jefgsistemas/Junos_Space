@@ -1,0 +1,40 @@
+/*
+Este script ejecuta comando get interface y presenta la salida a un archivo
+Deben existir el archivo show_interfaces.txt en la ruta /var/db/scripts/op previamente
+Escrito por: Jorge Fernandez
+*/
+
+version 1.0;
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns redirect extension = "org.apache.xalan.xslt.extensions.Redirect";
+ns exsl extension = "http://exslt.org/common";
+ 
+import "../import/junos.xsl";
+
+match / {
+  <op-script-results> {
+    var $rpc-int-info-req = {
+      <get-interface-information> {
+      <terse>;
+      }
+    }
+	var $conn = jcs:open();
+	
+	var $int-info = jcs:invoke($rpc-int-info-req);
+	<output>$int-info;
+	
+	var $rsi-put = <file-put> {
+          <filename> "/var/db/scripts/op/show_interfaces.txt";
+          <encoding> "ascii";
+		  <permission> "775";
+          <delete-if-exist>;
+          <file-contents> $int-info;
+        }
+	
+	var $out_keep_writingd = jcs:execute($conn, $rsi-put);
+	var $close-results = jcs:close($conn);
+	
+  }
+}
