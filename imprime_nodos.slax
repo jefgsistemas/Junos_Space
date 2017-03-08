@@ -1,0 +1,52 @@
+/*Este script imprime los nodos existentes en la variable conjunto
+Escrito por: Jorge Fernandez
+es necesario incluir la linea: ns exsl = "http://exslt.org/common";
+*/
+
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+ns slax = "http://xml.libslax.org/slax";
+ns exsl = "http://exslt.org/common";
+
+import "../import/junos.xsl";
+match / {
+		<op-script-results> {
+				var $conjunto = {
+					<color> "rojo";
+					<color> "verde";
+					<tipo> "liquido";
+					<tipo> "gaseoso";
+					<tonos> {
+						<tono> "claro";
+						<tono> "oscuro";
+						<calidades> {
+							<calidad> "alta";
+							<calidad> "media";
+							<calidad> "baja";
+						}
+					}
+				}
+				/*establece la variable ns como tipo nodo*/
+				var $ns = exsl:node-set( $conjunto );
+				<output> "imprime los nodos tipo:";
+				for-each( $ns/tipo ) {
+					<output> .;
+				}
+				<output> "imprime los nodos color:";
+				for-each ($ns/color) {
+					<output> .;
+				}
+				<output> "imprime los nodos tono:";
+				for-each ($ns/tonos/tono) {
+					<output> .;
+				}
+				<output> "imprime los nodos calidad:";
+				for-each ($ns/tonos/calidades/calidad) {
+					<output> .;
+				}
+		}
+}
