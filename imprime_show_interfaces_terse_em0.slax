@@ -1,0 +1,38 @@
+/*Este script imprime el resultado de show interface terse em0
+Escrito por: Jorge Fernandez
+es necesario incluir la linea: ns exsl = "http://exslt.org/common";
+*/
+
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+ns slax = "http://xml.libslax.org/slax";
+ns exsl = "http://exslt.org/common";
+
+import "../import/junos.xsl";
+match / {
+		<op-script-results> {
+		var $conn = jcs:open();
+		
+		/*ejecuta 'show interface terse em0' es posible ver el comando con: show interfaces terse em0 | display xml rpc */
+		var $interfaces = {
+			<get-interface-information> {
+			<terse>;
+			<interface-name>"em0";
+			}
+		}
+		
+		var $operacion = jcs:execute($conn, "get-software-information");
+		copy-of $operacion;
+		
+		
+		var $operaciond = jcs:execute($conn, $interfaces);
+		copy-of $operaciond;
+		
+		expr jcs:close($conn);
+		}
+		
+}
