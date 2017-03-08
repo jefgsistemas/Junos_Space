@@ -1,0 +1,46 @@
+/*Este script imprime el resultado de show interface terse em0 y lo envia a un archivo
+Escrito por: Jorge Fernandez
+es necesario incluir la linea: ns exsl = "http://exslt.org/common";
+*/
+
+version 1.1;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+ns slax = "http://xml.libslax.org/slax";
+ns exsl = "http://exslt.org/common";
+ns redirect extension = "org.apache.xalan.xslt.extensions.Redirect";
+
+import "../import/junos.xsl";
+match / {
+		<op-script-results> {
+		var $conn = jcs:open();
+		
+		/*ejecuta 'show interface terse em0' es posible ver el comando con: show interfaces terse em0 | display xml rpc */
+		var $interfaces = {
+			<get-interface-information> {
+			<terse>;
+			<interface-name>"em0";
+			}
+		}
+		
+		var $operaciond = jcs:execute($conn, $interfaces);
+		/*Imprime archivo en pantalla*/
+		copy-of $operaciond;
+		
+		/*Escribe el resultado del comando en un archivo*/
+		var $file-put = <file-put> {
+          <filename> "/var/tmp/show_interface_terse.txt";
+          <encoding> "ascii";
+		  <permission> "775";
+          <delete-if-exist>;
+          <file-contents> $operaciond;
+        }
+		
+		var $escribe-archivo = jcs:execute($conn, $file-put);
+		expr jcs:close($conn);
+		}
+		
+}
