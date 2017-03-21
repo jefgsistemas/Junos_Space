@@ -1,0 +1,95 @@
+version 1.0;
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+import "../import/junos.xsl";
+
+/* Define la descripcion de los argumentos para ayuda en el CLI */
+var $arguments = {
+	<argument> {
+		<name> "interface";
+		<description> "Ingrese nombre de la interface";
+	}
+	<argument> {
+		<name> "incidente";
+		<description> "Ingrese el numero de incidente";
+	}
+}
+
+/* Parametros globales */
+param $interface;
+param $incidente;
+var $conn = jcs:open();	
+
+match / {
+	<op-script-results> {
+	var $cobuscar = <command> "show interfaces terse";
+	var $out_cobuscar = jcs:execute($conn, $cobuscar);
+		
+		if (contains($out_cobuscar, $interface)) {				/*Busca la interface en la configuracion*/
+			var $tempd = jcs:output("La interface introducida es valida");
+			var $co = "show configuration interfaces "_ $interface _" unit 0 family inet filter input";
+			var $filtroactivo_cmd = <command> $co;
+			var $out_cmd = jcs:execute($conn, $filtroactivo_cmd);
+	
+				if (contains($out_cmd, "protect-vrf;")) {		/*Busca si la interface tiene un filtro protect-vrf*/
+					var $temp = jcs:output("La interface tiene activo protect-vrf por tal razon se ejecuta el cambio");
+					var $configinterface = <configuration> {
+								<interfaces> {
+									<interface> { 
+									<name> "em0";
+										<unit> {
+										<name> "0";
+											<family> {
+												<inet> {
+													<filter> {
+														<input> {
+															<filter-name>"protect-vrf-noicmp";
+														}
+													}
+												}	
+											}	
+										}			
+									}
+								}
+							}
+							var $load-action = "merge";
+
+							var $options := {
+								<commit-options> {
+								<log> "cambio filtro desde Junos Space";
+								}
+							}	
+					
+							/* llama la plantilla guarda-config para enviar la configuracion y guardar */
+							call guarda-config( $config = $configinterface, $accion = $load-action, $opcion-log = $options);
+
+				}
+				else {
+				var $temp = jcs:output("La interface No tiene activo protect-vrf No se ejecuta el cambio");
+				var $close-results = jcs:close($conn);
+				}
+			
+			}
+			
+		else {
+			var $tempd = jcs:output("La interface introducida No es valida");
+			}	
+	
+	}
+}
+
+template guarda-config() {
+	param $config;
+	param $accion;
+	param $opcion-log;
+	var $results := { call jcs:load-configuration( $action=$accion, $commit-options=$opcion-log, $connection = $conn, $configuration = $config ); }
+	/* Verifica errores en la carga de configuracion */
+	if( $results//xnm:error ) {
+		for-each( $results//xnm:error ) {
+			<output> message;
+		}
+	}
+	/* Cierra la conexion*/
+	var $close-results = jcs:close($conn);
+}
