@@ -1,0 +1,141 @@
+/*Nombre: Creacion de Interfaz
+Descripcion: Crea una interfaz a partir de la informacion recibida
+Escrito por: Jorge Fernández
+Empresa: QyC Ingenieria*/ 
+
+version 1.1;
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns exsl = "http://exslt.org/common";
+
+import "../import/junos.xsl";
+
+/* Define la descripcion de los argumentos para ayuda en el CLI */
+var $arguments = {
+	<argument> {
+		<name> "interface";
+		<description> "Ingrese nombre de la interface";
+	}
+	<argument> {
+		<name> "unit";
+		<description> "Ingrese el unit";
+	}
+	<argument> {
+		<name> "descripcion";
+		<description> "Ingrese la Descripcion";
+	}
+	<argument> {
+		<name> "vlan_outter";
+		<description> "ingrese la identificacion de la vlan outter";
+	}
+	<argument> {
+		<name> "vlan_inner";
+		<description> "ingrese la identificacion de la vlan inner";
+	}
+	<argument> {
+		<name> "ancho_banda";
+		<description> "ingrese el ancho de banda";
+	}
+	<argument> {
+		<name> "direccion_ip";
+		<description> "ingrese la direccion IP";
+	}
+	<argument> {
+		<name> "incidente";
+		<description> "ingrese el numero de incidente";
+	}
+}
+
+/* Parametros globales */
+param $interface;
+param $unit;
+param $descripcion;
+param $vlan-outter;
+param $vlan-inner;
+param $ancho_banda;
+param $direccion_ip = "10.238.";
+param $incidente;
+var $conn = jcs:open();	
+var $interface_existe;
+var $unit_existe;
+var $vlan_existe;
+
+match / {
+	<op-script-results> {
+	var $interface_existe = {
+	call valida-interface();
+	}
+	
+	var $unit_existe = {
+	call valida-unit();
+	}
+	
+
+	call valida-vlan();
+
+	
+	if ($interface_existe == '1') {
+		<output> "interface existe";
+		}
+		
+	if ($unit_existe == '1') {
+		<output> "unit existe";
+		}
+		
+
+		
+	}
+}
+
+template valida-interface() {
+	var $rpc-config-req = <get-configuration database="committed" inherit="inherit">;
+	var $configuration = jcs:invoke($rpc-config-req);
+		if ($configuration/interfaces/interface[name = $interface]) {
+		expr 1;
+		}
+		else {
+		expr 0;
+		}
+}
+
+template valida-unit() {
+	var $rpc-config-req-u = <get-configuration database="committed" inherit="inherit">;
+	var $configuration-u = jcs:invoke($rpc-config-req-u);
+		if ($configuration-u/interfaces/interface[name = $interface]/unit[name = $unit]) {
+		expr 1;
+		}
+		else {
+		expr 0;
+		}
+}
+
+template valida-vlan() {
+	var $rpc-config-req-v = <get-configuration database="committed" inherit="inherit">;
+	var $configuration-v = jcs:invoke($rpc-config-req-v);
+		for-each($configuration-v/interfaces/interface[name = $interface]/unit[name = $unit]) {
+				<output> vlan-id;
+		}
+		/*if ($configuration-v/interfaces/interface[name = $interface]/unit[vlan-id = $vlan-inner) {
+		expr 1;
+		}
+		else {
+		expr 0;
+		}*/
+}
+
+/*template para guarda la configuracion enviada*/
+template guarda-config() {
+	param $config;
+	param $accion;
+	param $opcion-log;
+	var $results := { call jcs:load-configuration( $action=$accion, $commit-options=$opcion-log, $connection = $conn, $configuration = $config ); }
+	/* Verifica errores en la carga de configuracion */
+	if( $results//xnm:error ) {
+		for-each( $results//xnm:error ) {
+			<output> message;
+		}
+	}
+	/* Cierra la conexion*/
+	var $close-results = jcs:close($conn);
+}
